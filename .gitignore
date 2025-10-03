@@ -79,4 +79,7 @@ models/
 # OS
 Thumbs.db
 
+# Archives
+*.zip
+
 
