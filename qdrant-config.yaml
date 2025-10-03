@@ -1,0 +1,22 @@
+# Configuração do Qdrant Standalone
+# Para usar: qdrant.exe --config-path qdrant-config.yaml
+
+service:
+  # Porta HTTP (API + Dashboard)
+  http_port: 6333
+  
+  # Porta gRPC
+  grpc_port: 6334
+
+# Habilitar Web UI (Dashboard)
+web_ui:
+  enabled: true
+
+# Configuração de storage
+storage:
+  # Onde os dados serão guardados
+  storage_path: ./storage
+
+# Log level
+log_level: INFO
+

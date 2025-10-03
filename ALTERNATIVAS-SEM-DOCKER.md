@@ -38,12 +38,27 @@ Remove-Item qdrant.zip
 
 #### Passo 2: Executar Qdrant
 
-```powershell
-# Navegar até a pasta
-cd C:\qdrant
+**⚠️ IMPORTANTE**: Na versão 1.7+, o dashboard precisa ser habilitado explicitamente!
 
-# Executar (deixe o terminal aberto!)
-.\qdrant.exe
+**Opção A: Usar o script automático (RECOMENDADO)**
+
+Na raiz do projeto FalaProduto, execute:
+```powershell
+.\start-qdrant.bat
+```
+
+Este script:
+- Copia a configuração necessária
+- Inicia o Qdrant com dashboard habilitado
+- Mostra o link do dashboard
+
+**Opção B: Manual**
+
+1. Copie o arquivo `qdrant-config.yaml` da raiz do projeto para `C:\qdrant\`
+2. Execute:
+```powershell
+cd C:\qdrant
+.\qdrant.exe --config-path qdrant-config.yaml
 ```
 
 **Você verá:**
@@ -51,9 +66,10 @@ cd C:\qdrant
 Qdrant | high-performance vector search at scale
 Version: 1.7.0
 Listening on http://0.0.0.0:6333
+Web UI enabled
 ```
 
-✅ **Pronto!** Qdrant está rodando!
+✅ **Pronto!** Qdrant está rodando com dashboard!
 
 #### Passo 3: Verificar
 
@@ -290,42 +306,22 @@ npm run dev
 
 ### Usando Qdrant Standalone
 
-**Criar script helper** `api/start-qdrant.bat`:
+**Usar o script já criado** (na raiz do projeto existe `start-qdrant.bat`):
 
-```bat
-@echo off
-echo Iniciando Qdrant standalone...
-echo.
-
-if not exist "C:\qdrant\qdrant.exe" (
-    echo ERRO: Qdrant nao encontrado!
-    echo Baixe de: https://github.com/qdrant/qdrant/releases
-    echo Extraia para: C:\qdrant\
-    pause
-    exit /b 1
-)
-
-cd C:\qdrant
-echo Qdrant rodando em http://localhost:6333
-echo Pressione Ctrl+C para parar
-echo.
-.\qdrant.exe
-```
-
-**Usar:**
 ```powershell
-# Terminal 1
-cd api
+# Terminal 1 - Qdrant
 .\start-qdrant.bat
 
-# Terminal 2
+# Terminal 2 - Backend
 cd api
 .\run-local.bat
 
-# Terminal 3
+# Terminal 3 - Frontend
 cd web
 npm run dev
 ```
+
+💡 **Nota**: O script `start-qdrant.bat` já habilita automaticamente o dashboard!
 
 ### Usando Qdrant Cloud
 
@@ -353,6 +349,25 @@ pause
 
 ## 🐛 Problemas Comuns
 
+### Dashboard não abre / "404 Not Found" (Standalone v1.7+)
+
+**Causa**: Dashboard não habilitado por padrão na versão 1.7+
+
+**Solução:**
+```powershell
+# Use o script que habilita o dashboard
+.\start-qdrant.bat
+
+# OU inicie manualmente com configuração
+cd C:\qdrant
+.\qdrant.exe --config-path qdrant-config.yaml
+```
+
+**Verificar se funcionou:**
+- Abra http://localhost:6333/dashboard
+- Deve aparecer a interface do Qdrant
+- Nos logs deve aparecer "Web UI enabled"
+
 ### Erro: "Connection refused" (Standalone)
 
 **Causa**: Qdrant não está rodando
@@ -360,8 +375,7 @@ pause
 **Solução:**
 ```powershell
 # Iniciar Qdrant em outro terminal
-cd C:\qdrant
-.\qdrant.exe
+.\start-qdrant.bat
 ```
 
 ### Erro: "Authentication failed" (Cloud)

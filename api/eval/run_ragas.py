@@ -30,6 +30,8 @@ try:
         context_recall,
         context_precision,
     )
+    from langchain_openai import AzureChatOpenAI, ChatOpenAI
+    from langchain_openai import AzureOpenAIEmbeddings, OpenAIEmbeddings
     RAGAS_AVAILABLE = True
 except ImportError:
     RAGAS_AVAILABLE = False
@@ -150,6 +152,56 @@ def create_ragas_dataset(eval_data: Dict[str, List]) -> 'Dataset':
     return Dataset.from_dict(dataset_dict)
 
 
+def get_ragas_llm_and_embeddings():
+    """
+    Get LLM and embeddings for RAGAS based on configuration.
+    
+    Returns:
+        tuple: (llm, embeddings) for RAGAS evaluation
+    """
+    if not RAGAS_AVAILABLE:
+        return None, None
+    
+    # Check if using Azure
+    if settings.llm_provider == "azure":
+        logger.info("Configuring RAGAS with Azure OpenAI")
+        
+        # Azure Chat LLM for RAGAS metrics
+        llm = AzureChatOpenAI(
+            azure_endpoint=settings.azure_openai_endpoint,
+            api_key=settings.azure_openai_api_key,
+            api_version=settings.azure_openai_api_version,
+            deployment_name=settings.azure_openai_deployment,
+            temperature=0,
+        )
+        
+        # Azure Embeddings for RAGAS
+        embeddings = AzureOpenAIEmbeddings(
+            azure_endpoint=settings.azure_openai_endpoint,
+            api_key=settings.azure_openai_api_key,
+            api_version=settings.azure_openai_api_version,
+            deployment=settings.openai_embedding_model,  # Use deployment name from config
+        )
+        
+        logger.info(f"Using Azure deployment: {settings.azure_openai_deployment}")
+    else:
+        logger.info("Configuring RAGAS with OpenAI")
+        
+        # Standard OpenAI
+        llm = ChatOpenAI(
+            api_key=settings.openai_api_key,
+            model=settings.llm_model,
+            temperature=0,
+        )
+        
+        embeddings = OpenAIEmbeddings(
+            api_key=settings.openai_api_key,
+            model=settings.openai_embedding_model,
+        )
+    
+    return llm, embeddings
+
+
 def print_evaluation_report(results: Dict[str, Any]):
     """Print a formatted evaluation report."""
     print("\n" + "="*60)
@@ -222,15 +274,24 @@ def main():
         try:
             dataset = create_ragas_dataset(eval_data)
             
-            # Run RAGAS evaluation
+            # Get LLM and embeddings (Azure or OpenAI)
+            llm, embeddings = get_ragas_llm_and_embeddings()
+            
+            # Configure metrics with Azure/OpenAI LLM and embeddings
+            metrics = [
+                faithfulness,
+                answer_relevancy,
+                context_recall,
+                context_precision,
+            ]
+            
+            # Run RAGAS evaluation with custom LLM and embeddings
+            logger.info(f"Running RAGAS with {settings.llm_provider.upper()} provider...")
             results = evaluate(
                 dataset,
-                metrics=[
-                    faithfulness,
-                    answer_relevancy,
-                    context_recall,
-                    context_precision,
-                ],
+                metrics=metrics,
+                llm=llm,
+                embeddings=embeddings,
             )
             
             # Print RAGAS report
@@ -248,8 +309,12 @@ def main():
         
         except Exception as e:
             logger.error(f"RAGAS evaluation failed: {e}")
-            logger.info("Note: RAGAS requires OpenAI API key for evaluation metrics")
-            logger.info("Set OPENAI_API_KEY in your environment or .env file")
+            if settings.llm_provider == "azure":
+                logger.info("Note: RAGAS with Azure requires valid Azure OpenAI credentials")
+                logger.info("Check AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY, and AZURE_OPENAI_DEPLOYMENT")
+            else:
+                logger.info("Note: RAGAS requires OpenAI API key for evaluation metrics")
+                logger.info("Set OPENAI_API_KEY in your environment or .env file")
     else:
         print("\n" + "="*70)
         print("⚠️  RAGAS metrics not available")
