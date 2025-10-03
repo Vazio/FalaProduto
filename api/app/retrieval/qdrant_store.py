@@ -11,6 +11,7 @@ from qdrant_client.models import (
     Filter,
     FieldCondition,
     MatchValue,
+    MatchText,
     SearchRequest
 )
 
@@ -136,10 +137,11 @@ class QdrantStore:
                 
                 # Filter by product (title contains product name)
                 if "product" in filters and filters["product"]:
+                    # Use MatchText for substring matching
                     conditions.append(
                         FieldCondition(
                             key="title",
-                            match=MatchValue(value=filters["product"])
+                            match=MatchText(text=filters["product"])
                         )
                     )
                 

@@ -122,6 +122,8 @@ def run_rag_evaluation(rag_pipeline: RAGPipeline, qa_pairs: List[Dict[str, Any]]
         
         except Exception as e:
             logger.error(f"Failed to process question: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             # Add placeholder to maintain alignment
             questions.append(question)
             ground_truths.append(ground_truth)
@@ -202,19 +204,43 @@ def get_ragas_llm_and_embeddings():
     return llm, embeddings
 
 
-def print_evaluation_report(results: Dict[str, Any]):
-    """Print a formatted evaluation report."""
+def print_evaluation_report(results):
+    """
+    Print a formatted evaluation report.
+    
+    Args:
+        results: EvaluationResult object from RAGAS
+    """
     print("\n" + "="*60)
     print("RAGAS EVALUATION REPORT")
     print("="*60)
     
-    for metric, score in results.items():
-        if metric != "question" and metric != "contexts":
+    # Convert EvaluationResult to pandas DataFrame
+    try:
+        df = results.to_pandas()
+        
+        # Calculate mean scores for each metric
+        metric_scores = {}
+        for col in df.columns:
+            if col not in ['question', 'contexts', 'ground_truth', 'answer']:
+                metric_scores[col] = df[col].mean()
+        
+        # Print metrics
+        for metric, score in metric_scores.items():
             print(f"{metric:.<40} {score:.4f}")
-    
-    print("="*60)
-    print(f"Average Score: {sum(v for k, v in results.items() if k not in ['question', 'contexts']) / (len(results) - 2):.4f}")
-    print("="*60 + "\n")
+        
+        print("="*60)
+        if metric_scores:
+            avg_score = sum(metric_scores.values()) / len(metric_scores)
+            print(f"Average Score: {avg_score:.4f}")
+        print("="*60 + "\n")
+        
+        return metric_scores
+        
+    except Exception as e:
+        logger.error(f"Failed to format results: {e}")
+        print(f"Results: {results}")
+        return {}
 
 
 def main():
@@ -224,6 +250,23 @@ def main():
     # Initialize RAG pipeline
     logger.info("Initializing RAG pipeline...")
     rag_pipeline = RAGPipeline()
+    
+    # Check if Qdrant has documents
+    doc_count = rag_pipeline.vector_store.count_documents()
+    logger.info(f"Qdrant collection '{settings.qdrant_collection}' has {doc_count} documents")
+    
+    if doc_count == 0:
+        print("\n" + "="*70)
+        print("⚠️  ERROR: Qdrant collection is EMPTY!")
+        print("="*70)
+        print(f"Collection name: {settings.qdrant_collection}")
+        print(f"You need to ingest documents first!")
+        print("\nTo ingest documents, run:")
+        print("  1. Start the API: python -m uvicorn app.main:app --reload")
+        print("  2. Call the ingest endpoint: POST http://localhost:8000/ingest")
+        print("     Or use the web interface")
+        print("="*70 + "\n")
+        return
     
     # Load ground truth data
     logger.info("Loading ground truth data...")
@@ -298,17 +341,31 @@ def main():
             print("\n" + "="*70)
             print("RAGAS METRICS")
             print("="*70)
-            print_evaluation_report(results)
+            metric_scores = print_evaluation_report(results)
             
             # Save RAGAS results
             ragas_output = Path(settings.data_dir) / "evaluation_results_ragas.json"
-            with open(ragas_output, 'w', encoding='utf-8') as f:
-                json.dump(results, f, indent=2, ensure_ascii=False)
             
-            logger.info(f"RAGAS results saved to {ragas_output}")
+            # Convert results to DataFrame and then to dict for JSON serialization
+            try:
+                df = results.to_pandas()
+                results_dict = {
+                    "summary": metric_scores,
+                    "details": df.to_dict(orient='records')
+                }
+                
+                with open(ragas_output, 'w', encoding='utf-8') as f:
+                    json.dump(results_dict, f, indent=2, ensure_ascii=False)
+                
+                logger.info(f"RAGAS results saved to {ragas_output}")
+            except Exception as e:
+                logger.error(f"Failed to save RAGAS results: {e}")
         
         except Exception as e:
             logger.error(f"RAGAS evaluation failed: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            
             if settings.llm_provider == "azure":
                 logger.info("Note: RAGAS with Azure requires valid Azure OpenAI credentials")
                 logger.info("Check AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY, and AZURE_OPENAI_DEPLOYMENT")
