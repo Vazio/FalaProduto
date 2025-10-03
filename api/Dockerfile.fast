@@ -1,0 +1,26 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip
+RUN pip install --upgrade pip
+
+# Copy and install minimal requirements (NO sentence-transformers for fast build)
+COPY requirements-minimal.txt .
+RUN pip install --default-timeout=300 --retries 5 -r requirements-minimal.txt
+
+# Copy application code
+COPY . .
+
+EXPOSE 8000
+
+# Note: Sentence transformers will be installed on first run if using local embeddings
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+

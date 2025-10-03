@@ -1,0 +1,13 @@
+# Optional: Evaluation dependencies (heavy, install separately if needed)
+# Install with: pip install -r requirements-eval.txt
+
+# Include core dependencies
+-r requirements-core.txt
+
+# RAG Evaluation
+ragas==0.1.7
+datasets==2.16.1
+langchain==0.1.13
+langchain-openai==0.0.8
+
+
