@@ -31,10 +31,23 @@
 - **Download**: https://nodejs.org/ (versão LTS)
 - **Testar**: `node --version` e `npm --version`
 
-#### 1.3 Docker Desktop
+#### 1.3 Docker Desktop (Ou Alternativas)
+
+**Opção A: Com Docker (Mais Simples)**
 - **Download**: https://www.docker.com/products/docker-desktop/
 - **Importante**: Iniciar Docker Desktop e aguardar estar "Running"
 - **Testar**: `docker run hello-world`
+
+**Opção B: Sem Docker (Alternativas)**
+
+⚠️ **Se não pode instalar Docker**, veja: **[ALTERNATIVAS-SEM-DOCKER.md](ALTERNATIVAS-SEM-DOCKER.md)**
+
+Opções disponíveis:
+1. **Qdrant Standalone** - Executável sem Docker
+2. **Qdrant Cloud** - Serviço gratuito na nuvem
+3. **Qdrant em Memória** - Para testes rápidos
+
+> 💡 **Recomendação sem Docker**: Use Qdrant Cloud (mais fácil) ou Standalone (mais controle)
 
 #### 1.4 Chaves de API
 
@@ -133,13 +146,36 @@ npm install
 
 #### Terminal 1: Qdrant (Banco de Dados Vetorial)
 
+**Com Docker:**
 ```powershell
 docker run -p 6333:6333 qdrant/qdrant
 ```
 
+**Sem Docker (Alternativas):**
+
+Se não tem Docker, escolha uma opção:
+
+**Opção 1: Qdrant Standalone**
+```powershell
+cd C:\qdrant
+.\qdrant.exe
+```
+
+**Opção 2: Qdrant Cloud**
+- Nada a iniciar! Já está na nuvem
+- Configure no `.env`: `QDRANT_URL=sua-url-cloud`
+- Pule para o Terminal 2
+
+**Opção 3: Qdrant em Memória**
+- Nada a iniciar! Roda com a API
+- Configure no `.env`: `QDRANT_URL=memory`
+- Pule para o Terminal 2
+
+> 📚 **Detalhes completos**: [ALTERNATIVAS-SEM-DOCKER.md](ALTERNATIVAS-SEM-DOCKER.md)
+
 ✅ **Verificar**: http://localhost:6333/dashboard
 
-**Deixe este terminal aberto!**
+**Deixe este terminal aberto!** (se usando Standalone ou Docker)
 
 #### Terminal 2: Backend (API Python)
 
@@ -209,6 +245,7 @@ curl -X POST http://localhost:8000/ingest
 
 ### Comandos Diários
 
+**Com Docker:**
 ```powershell
 # Iniciar Qdrant
 docker run -p 6333:6333 qdrant/qdrant
@@ -218,6 +255,47 @@ cd api
 .\run-local.bat
 
 # Iniciar Frontend
+cd web
+npm run dev
+```
+
+**Sem Docker (Alternativas):**
+
+Escolha sua opção configurada:
+
+**Opção 1: Qdrant Standalone**
+```powershell
+# Terminal 1: Qdrant
+cd C:\qdrant
+.\qdrant.exe
+
+# Terminal 2: Backend
+cd api
+.\run-local.bat
+
+# Terminal 3: Frontend
+cd web
+npm run dev
+```
+
+**Opção 2: Qdrant Cloud (Apenas 2 terminais!)**
+```powershell
+# Terminal 1: Backend
+cd api
+.\run-local.bat
+
+# Terminal 2: Frontend
+cd web
+npm run dev
+```
+
+**Opção 3: Qdrant Memória (Apenas 2 terminais!)**
+```powershell
+# Terminal 1: Backend
+cd api
+.\run-local.bat
+
+# Terminal 2: Frontend
 cd web
 npm run dev
 

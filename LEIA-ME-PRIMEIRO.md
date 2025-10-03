@@ -38,19 +38,23 @@ cd ..\web
 npm install
 ```
 
-### 3. Iniciar (3 terminais)
+### 3. Iniciar
+
+**Com Docker (3 terminais):**
 ```powershell
-# Terminal 1
+# Terminal 1: Qdrant
 docker run -p 6333:6333 qdrant/qdrant
 
-# Terminal 2
+# Terminal 2: Backend
 cd api
 .\run-local.bat
 
-# Terminal 3
+# Terminal 3: Frontend
 cd web
 npm run dev
 ```
+
+**Sem Docker?** Veja: [ALTERNATIVAS-SEM-DOCKER.md](ALTERNATIVAS-SEM-DOCKER.md)
 
 **Acesse:** http://localhost:3000
 
@@ -91,7 +95,7 @@ FalaProduto/
 
 - [ ] Python 3.11+ instalado
 - [ ] Node.js 20+ instalado
-- [ ] Docker Desktop instalado e rodando
+- [ ] Docker Desktop instalado e rodando (ou alternativa sem Docker)
 - [ ] Chaves API (OpenAI ou Azure) obtidas
 - [ ] `.env` configurado
 - [ ] Li o [GUIA-FORMACAO.md](GUIA-FORMACAO.md)
